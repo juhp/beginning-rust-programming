@@ -48,7 +48,7 @@ fn populate_from_file(filename: String) -> World
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
     let mut pairs:  Vec<(usize, usize)> = Vec::new();
-    for (index, line) in reader.lines().enumerate() {
+    for line in reader.lines() {
         let l = line.unwrap();
         let mut words = l.split_whitespace();
         let left = words.next().unwrap();
