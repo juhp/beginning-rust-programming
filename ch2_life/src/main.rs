@@ -8,6 +8,7 @@ use termion::color;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::event::Key;
+use termion::screen::AlternateScreen;
 
 const XSIZE: usize = 160;
 const YSIZE: usize = 48;
@@ -37,28 +38,28 @@ fn main() {
         world = populate_from_file(filename);
     }
 
-    let mut stdout = stdout().into_raw_mode().unwrap();
+    let mut screen = AlternateScreen::from(stdout().into_raw_mode().unwrap());
     let mut stdin = termion::async_stdin().keys();
 
     for _gens in 0..ITERATIONS {
         let temp = generation(world);
         world = temp;
         generations += 1;
-        write!(stdout, "{}", clear::All).unwrap();
+        write!(screen, "{}\r", clear::All).unwrap();
 
         for j in 0..YSIZE {
             for i in 0..XSIZE {
-                write!(stdout, "{}", if world[i][j] {"o"} else {" "}).unwrap();
+                write!(screen, "{}", if world[i][j] {"o"} else {" "}).unwrap();
             }
-            writeln!(stdout, "\r").unwrap();
+            writeln!(screen, "\r").unwrap();
         }
 
-        write!(stdout, "{blue}Generation {g}  Population {c}{reset}\r",
+        write!(screen, "{blue}Generation {g}  Population {c}{reset}",
                  blue = color::Fg(color::Blue),
                  g = generations,
                  c = census(world),
                  reset = color::Fg(color::Reset)).unwrap();
-        stdout.flush().unwrap();
+        screen.flush().unwrap();
         if let Some(Ok(key)) = stdin.next() {
             match key {
                 Key::Char('q') | Key::Esc => break,
