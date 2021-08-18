@@ -1,5 +1,3 @@
-use rand;
-use termion;
 use std::{env, thread, time};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write, stdout};
@@ -15,22 +13,22 @@ const YSIZE: usize = 48;
 const ITERATIONS: u64 = 500;
 const WAIT: u64 = 100;
 
-type World = [[bool; YSIZE]; XSIZE];
+type World = [[bool; XSIZE]; YSIZE];
 
 fn new_world () -> World {
-    [[false; YSIZE]; XSIZE]
+    [[false; XSIZE]; YSIZE]
 }
 
 fn main() {
     let mut world = new_world() ;
     let mut generations = 0;
 
-    let args: Vec<String> = env::args().collect();
+    let args = env::args();
 
     if args.len() < 2 {
-        for i in 0..XSIZE {
-            for j in 0..YSIZE {
-                world[i][j] = rand::random();
+        for row in world.iter_mut() {
+            for cell in row.iter_mut() {
+                *cell = rand::random();
             }
         }
     } else {
@@ -47,9 +45,9 @@ fn main() {
         generations += 1;
         write!(screen, "{}\r", clear::All).unwrap();
 
-        for j in 0..YSIZE {
-            for i in 0..XSIZE {
-                write!(screen, "{}", if world[i][j] {"o"} else {" "}).unwrap();
+        for row in world {
+            for cell in row {
+                write!(screen, "{}", if cell {"o"} else {" "}).unwrap();
             }
             writeln!(screen, "\r").unwrap();
         }
@@ -88,12 +86,6 @@ fn populate_from_file(filename: String) -> World
         pairs.push((left.parse::<usize>().unwrap(), right.parse::<usize>().unwrap()));
     }
 
-    for j in 0..YSIZE {
-        for i in 0..XSIZE {
-            newworld[i][j] = false;
-        }
-    }
-
     for (x,y) in pairs {
         newworld[x][y] = true;
     }
@@ -104,10 +96,9 @@ fn census(world: World) -> u16
 {
     let mut count = 0;
 
-    for j in 0..YSIZE {
-        for i in 0..XSIZE {
-            if world[i][j]
-            {
+    for row in world {
+        for cell in row {
+            if cell {
                 count += 1;
             }
         }
@@ -123,32 +114,32 @@ fn generation(world: World) -> World
 {
     let mut newworld = new_world();
 
-    for j in 0..YSIZE {
-        for i in 0..XSIZE {
+    for i in 0..YSIZE {
+        for j in 0..XSIZE {
             let mut count = 0;
             if i>0 {
-                count = count + cell(world[i-1][j]);
+                count += cell(world[i-1][j]);
             }
             if i>0 && j>0 {
-                count = count + cell(world[i-1][j-1]);
+                count += cell(world[i-1][j-1]);
             }
-            if i>0 && j<(YSIZE-1) {
-                count = count + cell(world[i-1][j+1]);
+            if i>0 && j<(XSIZE-1) {
+                count += cell(world[i-1][j+1]);
             }
-            if i<(XSIZE-1) && j>0 {
-                count = count + cell(world[i+1][j-1]);
+            if i<(YSIZE-1) && j>0 {
+                count += cell(world[i+1][j-1]);
             }
-            if i<(XSIZE-1) {
-                count = count + cell(world[i+1][j]);
+            if i<(YSIZE-1) {
+                count += cell(world[i+1][j]);
             }
-            if i<(XSIZE-1) && j<(YSIZE-1) {
-                count = count + cell(world[i+1][j+1]);
+            if i<(YSIZE-1) && j<(XSIZE-1) {
+                count += cell(world[i+1][j+1]);
             }
             if j>0 {
-                count = count + cell(world[i][j-1]);
+                count += cell(world[i][j-1]);
             }
-            if j<(YSIZE-1) {
-                count = count + cell(world[i][j+1]);
+            if j<(XSIZE-1) {
+                count += cell(world[i][j+1]);
             }
 
             newworld[i][j] = false;
