@@ -29,14 +29,13 @@ fn main() {
         world = populate_from_file(filename);
     }
 
-    println!("Population at generation {} is {}", generations, census(world));
     for _gens in 0..100 {
         let temp = generation(world);
         world = temp;
         generations += 1;
         println!("{}", clear::All);
         displayworld(world);
-        println!("{blue}Population at generation {g} is {c}{reset}",
+        println!("{blue}Generation {g}  Population {c}{reset}",
                  blue = color::Fg(color::Blue),
                  g = generations,
                  c = census(world),
