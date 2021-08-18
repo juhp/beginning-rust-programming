@@ -6,8 +6,14 @@ use std::io::{BufRead, BufReader};
 use termion::clear;
 use termion::color;
 
+type World = [[bool; 75]; 75];
+
+fn new_world () -> World {
+    [[false; 75]; 75]
+}
+
 fn main() {
-    let mut world = [[0u8; 75]; 75];
+    let mut world = new_world() ;
     let mut generations = 0;
 
     let args: Vec<String> = env::args().collect();
@@ -15,11 +21,7 @@ fn main() {
     if args.len() < 2 {
         for i in 0..74 {
             for j in 0..74 {
-                if rand::random() {
-                    world[i][j] = 1;
-                } else {
-                    world[i][j] = 0;
-                }
+                world[i][j] = rand::random();
             }
         }
     } else {
@@ -40,9 +42,9 @@ fn main() {
 
 }
 
-fn populate_from_file(filename: String) -> [[u8; 75]; 75] 
+fn populate_from_file(filename: String) -> World
 {
-    let mut newworld = [[0u8; 75]; 75];
+    let mut newworld = new_world();
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
     let mut pairs:  Vec<(usize, usize)> = Vec::new();
@@ -56,25 +58,25 @@ fn populate_from_file(filename: String) -> [[u8; 75]; 75]
 
     for i in 0..74 {
         for j in 0..74 {
-            newworld[i][j] = 0;
+            newworld[i][j] = false;
         }
     }
 
     for (x,y) in pairs {
-        newworld[x][y] = 1;
+        newworld[x][y] = true;
     }
     newworld
 }
 
-fn displayworld(world: [[u8; 75]; 75])
+fn displayworld(world: World)
 {
     for i in 0..74 {
         for j in 0..74 {
-            if world[i][j] == 1 
+            if world[i][j]
             {
                 print!("{red}*", red = color::Fg(color::Red));
             }
-            else 
+            else
             {
                 print!(" ");
             }
@@ -83,13 +85,13 @@ fn displayworld(world: [[u8; 75]; 75])
     }
 }
 
-fn census(world: [[u8; 75]; 75]) -> u16
+fn census(world: World) -> u16
 {
     let mut count = 0;
 
     for i in 0..74 {
         for j in 0..74 {
-            if world[i][j] == 1
+            if world[i][j]
             {
                 count += 1;
             }
@@ -97,52 +99,55 @@ fn census(world: [[u8; 75]; 75]) -> u16
     }
     count
 }
-fn generation(world: [[u8; 75]; 75]) -> [[u8; 75]; 75]
+
+fn cell (b: bool) -> u8 {
+    if b { 1 } else { 0 }
+}
+
+fn generation(world: World) -> World
 {
-    let mut newworld = [[0u8; 75]; 75];
+    let mut newworld = new_world();
 
     for i in 0..74 {
         for j in 0..74 {
             let mut count = 0;
             if i>0 {
-                count = count + world[i-1][j];
+                count = count + cell(world[i-1][j]);
             }
             if i>0 && j>0 {
-                count = count + world[i-1][j-1];
+                count = count + cell(world[i-1][j-1]);
             }
             if i>0 && j<74 {
-                count = count + world[i-1][j+1];
+                count = count + cell(world[i-1][j+1]);
             }
             if i<74 && j>0 {
-                count = count + world[i+1][j-1]
+                count = count + cell(world[i+1][j-1]);
             }
             if i<74 {
-                count = count + world[i+1][j];
+                count = count + cell(world[i+1][j]);
             }
             if i<74 && j<74 {
-                count = count + world[i+1][j+1];
+                count = count + cell(world[i+1][j+1]);
             }
             if j>0 {
-                count = count + world[i][j-1];
+                count = count + cell(world[i][j-1]);
             }
             if j<74 {
-                count = count + world[i][j+1];
+                count = count + cell(world[i][j+1]);
             }
 
-            newworld[i][j] = 0;
+            newworld[i][j] = false;
 
-            if (count <2) && (world[i][j] == 1) {
-                newworld[i][j] = 0;
+            if (count <2) && (world[i][j]) {
+                newworld[i][j] = false;
             }
-            if world[i][j] == 1 && (count == 2 || count == 3) {
-                newworld[i][j] = 1;
+            if world[i][j] && (count == 2 || count == 3) {
+                newworld[i][j] = true;
             }
-            if (world[i][j] == 0) && (count == 3) {
-                newworld[i][j] = 1;
+            if (!world[i][j]) && (count == 3) {
+                newworld[i][j] = true;
             }
         }
     }
     newworld
 }
-
-
