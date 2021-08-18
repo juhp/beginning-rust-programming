@@ -36,8 +36,12 @@ fn main() {
         generations += 1;
         println!("{}", clear::All);
         displayworld(world);
-        println!("{blue}Population at generation {g} is {c}", blue = color::Fg(color::Blue), g = generations, c = census(world));
-        thread::sleep(time::Duration::from_secs(2));
+        println!("{blue}Population at generation {g} is {c}{reset}",
+                 blue = color::Fg(color::Blue),
+                 g = generations,
+                 c = census(world),
+                 reset = color::Fg(color::Reset));
+        thread::sleep(time::Duration::from_millis(2));
     }
 
 }
