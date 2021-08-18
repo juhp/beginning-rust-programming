@@ -8,6 +8,8 @@ use termion::color;
 
 const XSIZE: usize = 160;
 const YSIZE: usize = 48;
+const ITERATIONS: u64 = 500;
+const WAIT: u64 = 100;
 
 type World = [[bool; YSIZE]; XSIZE];
 
@@ -32,7 +34,7 @@ fn main() {
         world = populate_from_file(filename);
     }
 
-    for _gens in 0..100 {
+    for _gens in 0..ITERATIONS {
         let temp = generation(world);
         world = temp;
         generations += 1;
@@ -43,7 +45,7 @@ fn main() {
                  g = generations,
                  c = census(world),
                  reset = color::Fg(color::Reset));
-        thread::sleep(time::Duration::from_millis(2));
+        thread::sleep(time::Duration::from_millis(WAIT));
     }
 
 }
