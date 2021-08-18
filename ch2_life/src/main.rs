@@ -80,14 +80,7 @@ fn displayworld(world: World)
 {
     for j in 0..YSIZE {
         for i in 0..XSIZE {
-            if world[i][j]
-            {
-                print!("{red}*", red = color::Fg(color::Red));
-            }
-            else
-            {
-                print!(" ");
-            }
+            print!("{}", if world[i][j] {"o"} else {" "});
         }
         println!("");
     }
