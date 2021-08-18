@@ -2,9 +2,12 @@ use rand;
 use termion;
 use std::{env, thread, time};
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write, stdout};
 use termion::clear;
 use termion::color;
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
+use termion::event::Key;
 
 const XSIZE: usize = 160;
 const YSIZE: usize = 48;
@@ -34,17 +37,37 @@ fn main() {
         world = populate_from_file(filename);
     }
 
+    let mut stdout = stdout().into_raw_mode().unwrap();
+    let mut stdin = termion::async_stdin().keys();
+
     for _gens in 0..ITERATIONS {
         let temp = generation(world);
         world = temp;
         generations += 1;
-        println!("{}", clear::All);
-        displayworld(world);
-        println!("{blue}Generation {g}  Population {c}{reset}",
+        write!(stdout, "{}", clear::All).unwrap();
+
+        for j in 0..YSIZE {
+            for i in 0..XSIZE {
+                write!(stdout, "{}", if world[i][j] {"o"} else {" "}).unwrap();
+            }
+            writeln!(stdout, "\r").unwrap();
+        }
+
+        write!(stdout, "{blue}Generation {g}  Population {c}{reset}\r",
                  blue = color::Fg(color::Blue),
                  g = generations,
                  c = census(world),
-                 reset = color::Fg(color::Reset));
+                 reset = color::Fg(color::Reset)).unwrap();
+        stdout.flush().unwrap();
+        if let Some(Ok(key)) = stdin.next() {
+            match key {
+                Key::Char('q') | Key::Esc => break,
+                _ =>
+                    while stdin.next().is_none() {
+                        thread::sleep(time::Duration::from_millis(WAIT));
+                    }
+            }
+        }
         thread::sleep(time::Duration::from_millis(WAIT));
     }
 
@@ -74,16 +97,6 @@ fn populate_from_file(filename: String) -> World
         newworld[x][y] = true;
     }
     newworld
-}
-
-fn displayworld(world: World)
-{
-    for j in 0..YSIZE {
-        for i in 0..XSIZE {
-            print!("{}", if world[i][j] {"o"} else {" "});
-        }
-        println!("");
-    }
 }
 
 fn census(world: World) -> u16
