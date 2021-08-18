@@ -8,19 +8,21 @@ use termion::raw::IntoRawMode;
 use termion::event::Key;
 use termion::screen::AlternateScreen;
 
-const XSIZE: usize = 160;
-const YSIZE: usize = 48;
 const ITERATIONS: u64 = 500;
 const WAIT: u64 = 100;
 
-type World = [[bool; XSIZE]; YSIZE];
+type Termsize = (usize,usize);
 
-fn new_world () -> World {
-    [[false; XSIZE]; YSIZE]
+type World = Vec<Vec<bool>>;
+
+fn mk_world ((x,y): Termsize) -> World {
+    vec![vec![false; x]; y]
 }
 
 fn main() {
-    let mut world = new_world() ;
+    let termsize: (u16,u16) = termion::terminal_size().unwrap_or((132,48));
+    let termsize: Termsize = (termsize.0.into(),(termsize.1-1).into());
+    let mut world: World = mk_world(termsize);
     let mut generations = 0;
 
     let args = env::args();
@@ -33,21 +35,20 @@ fn main() {
         }
     } else {
         let filename = env::args().nth(1).unwrap();
-        world = populate_from_file(filename);
+        world = populate_from_file(termsize, filename);
     }
 
     let mut screen = AlternateScreen::from(stdout().into_raw_mode().unwrap());
     let mut stdin = termion::async_stdin().keys();
 
     for _gens in 0..ITERATIONS {
-        let temp = generation(world);
-        world = temp;
+        world = generation(termsize, &world);
         generations += 1;
         write!(screen, "{}\r", clear::All).unwrap();
 
-        for row in world {
+        for row in &world {
             for cell in row {
-                write!(screen, "{}", if cell {"o"} else {" "}).unwrap();
+                write!(screen, "{}", if *cell {"o"} else {" "}).unwrap();
             }
             writeln!(screen, "\r").unwrap();
         }
@@ -55,7 +56,7 @@ fn main() {
         write!(screen, "{blue}Generation {g}  Population {c}{reset}",
                  blue = color::Fg(color::Blue),
                  g = generations,
-                 c = census(world),
+                 c = census(&world),
                  reset = color::Fg(color::Reset)).unwrap();
         screen.flush().unwrap();
         if let Some(Ok(key)) = stdin.next() {
@@ -72,9 +73,9 @@ fn main() {
 
 }
 
-fn populate_from_file(filename: String) -> World
+fn populate_from_file(termsize: Termsize, filename: String) -> World
 {
-    let mut newworld = new_world();
+    let mut newworld = mk_world(termsize);
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
     let mut pairs:  Vec<(usize, usize)> = Vec::new();
@@ -92,13 +93,13 @@ fn populate_from_file(filename: String) -> World
     newworld
 }
 
-fn census(world: World) -> u16
+fn census(world: &World) -> u16
 {
     let mut count = 0;
 
     for row in world {
         for cell in row {
-            if cell {
+            if *cell {
                 count += 1;
             }
         }
@@ -110,12 +111,13 @@ fn cell (b: bool) -> u8 {
     if b { 1 } else { 0 }
 }
 
-fn generation(world: World) -> World
+fn generation(termsize: Termsize, world: &World) -> World
 {
-    let mut newworld = new_world();
+    let mut newworld = mk_world(termsize);
+    let (xsize,ysize) = termsize;
 
-    for i in 0..YSIZE {
-        for j in 0..XSIZE {
+    for i in 0..ysize {
+        for j in 0..xsize {
             let mut count = 0;
             if i>0 {
                 count += cell(world[i-1][j]);
@@ -123,33 +125,29 @@ fn generation(world: World) -> World
             if i>0 && j>0 {
                 count += cell(world[i-1][j-1]);
             }
-            if i>0 && j<(XSIZE-1) {
+            if i>0 && j<(xsize-1) {
                 count += cell(world[i-1][j+1]);
             }
-            if i<(YSIZE-1) && j>0 {
+            if i<(ysize-1) && j>0 {
                 count += cell(world[i+1][j-1]);
             }
-            if i<(YSIZE-1) {
+            if i<(ysize-1) {
                 count += cell(world[i+1][j]);
             }
-            if i<(YSIZE-1) && j<(XSIZE-1) {
+            if i<(ysize-1) && j<(xsize-1) {
                 count += cell(world[i+1][j+1]);
             }
             if j>0 {
                 count += cell(world[i][j-1]);
             }
-            if j<(XSIZE-1) {
+            if j<(xsize-1) {
                 count += cell(world[i][j+1]);
             }
 
-            newworld[i][j] = false;
-
-            if (count <2) && (world[i][j]) {
-                newworld[i][j] = false;
-            }
             if world[i][j] && (count == 2 || count == 3) {
                 newworld[i][j] = true;
             }
+
             if (!world[i][j]) && (count == 3) {
                 newworld[i][j] = true;
             }
