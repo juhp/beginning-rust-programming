@@ -1,5 +1,5 @@
-extern crate rand;
-extern crate termion;
+use rand;
+use termion;
 use std::{env, thread, time};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
