@@ -6,10 +6,13 @@ use std::io::{BufRead, BufReader};
 use termion::clear;
 use termion::color;
 
-type World = [[bool; 75]; 75];
+const XSIZE: usize = 160;
+const YSIZE: usize = 48;
+
+type World = [[bool; YSIZE]; XSIZE];
 
 fn new_world () -> World {
-    [[false; 75]; 75]
+    [[false; YSIZE]; XSIZE]
 }
 
 fn main() {
@@ -19,8 +22,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        for i in 0..74 {
-            for j in 0..74 {
+        for i in 0..XSIZE {
+            for j in 0..YSIZE {
                 world[i][j] = rand::random();
             }
         }
@@ -59,8 +62,8 @@ fn populate_from_file(filename: String) -> World
         pairs.push((left.parse::<usize>().unwrap(), right.parse::<usize>().unwrap()));
     }
 
-    for i in 0..74 {
-        for j in 0..74 {
+    for j in 0..YSIZE {
+        for i in 0..XSIZE {
             newworld[i][j] = false;
         }
     }
@@ -73,8 +76,8 @@ fn populate_from_file(filename: String) -> World
 
 fn displayworld(world: World)
 {
-    for i in 0..74 {
-        for j in 0..74 {
+    for j in 0..YSIZE {
+        for i in 0..XSIZE {
             if world[i][j]
             {
                 print!("{red}*", red = color::Fg(color::Red));
@@ -92,8 +95,8 @@ fn census(world: World) -> u16
 {
     let mut count = 0;
 
-    for i in 0..74 {
-        for j in 0..74 {
+    for j in 0..YSIZE {
+        for i in 0..XSIZE {
             if world[i][j]
             {
                 count += 1;
@@ -111,8 +114,8 @@ fn generation(world: World) -> World
 {
     let mut newworld = new_world();
 
-    for i in 0..74 {
-        for j in 0..74 {
+    for j in 0..YSIZE {
+        for i in 0..XSIZE {
             let mut count = 0;
             if i>0 {
                 count = count + cell(world[i-1][j]);
@@ -120,22 +123,22 @@ fn generation(world: World) -> World
             if i>0 && j>0 {
                 count = count + cell(world[i-1][j-1]);
             }
-            if i>0 && j<74 {
+            if i>0 && j<(YSIZE-1) {
                 count = count + cell(world[i-1][j+1]);
             }
-            if i<74 && j>0 {
+            if i<(XSIZE-1) && j>0 {
                 count = count + cell(world[i+1][j-1]);
             }
-            if i<74 {
+            if i<(XSIZE-1) {
                 count = count + cell(world[i+1][j]);
             }
-            if i<74 && j<74 {
+            if i<(XSIZE-1) && j<(YSIZE-1) {
                 count = count + cell(world[i+1][j+1]);
             }
             if j>0 {
                 count = count + cell(world[i][j-1]);
             }
-            if j<74 {
+            if j<(YSIZE-1) {
                 count = count + cell(world[i][j+1]);
             }
 
