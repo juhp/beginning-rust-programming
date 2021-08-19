@@ -1,4 +1,4 @@
-use std::{env, thread, time};
+use std::{thread, time};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Write, stdout};
 use termion::clear;
@@ -7,9 +7,7 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::event::Key;
 use termion::screen::AlternateScreen;
-
-const ITERATIONS: u64 = 500;
-const WAIT: u64 = 100;
+use clap::{Arg, App};
 
 type Termsize = (usize,usize);
 
@@ -20,28 +18,71 @@ fn mk_world ((x,y): Termsize) -> World {
 }
 
 fn main() {
-    let termsize: (u16,u16) = termion::terminal_size().unwrap_or((132,48));
+    let args =
+        App::new("Game of Life")
+        .arg(Arg::with_name("size")
+             .short("s")
+             .long("size")
+             .value_name("X Y")
+             .multiple(true)
+             .help("Size of the world grid [default: terminal size]")
+             .takes_value(true))
+        .arg(Arg::with_name("iterations")
+             .short("i")
+             .long("iterations")
+             .value_name("STEPS")
+             .help("number of iterations [default: 100]")
+             .takes_value(true))
+        .arg(Arg::with_name("delay")
+             .short("d")
+             .long("delay")
+             .value_name("MILLESECONDS")
+             .help("Delay between each interation [default: 100 ms]")
+             .takes_value(true))
+        .arg(Arg::with_name("file")
+             .short("f")
+             .long("file")
+             .value_name("FILE")
+             .help("initial state file")
+             .takes_value(true))
+        .get_matches();
+
+    let termsize: (u16,u16) =
+        if let Ok(vs) = clap::values_t!(args.values_of("size"), u16) {
+            match vs[..] {
+            [x,y] => (x,y),
+            _ => panic!("--size takes 2 numbers")
+            }
+        } else {
+            termion::terminal_size().unwrap_or((132,48))
+        };
     let termsize: Termsize = (termsize.0.into(),(termsize.1-1).into());
     let mut world: World = mk_world(termsize);
     let mut generations = 0;
 
-    let args = env::args();
-
-    if args.len() < 2 {
+    if let Some(filename) = args.value_of("file") {
+        world = populate_from_file(termsize, filename);
+    } else {
         for row in world.iter_mut() {
             for cell in row.iter_mut() {
                 *cell = rand::random();
             }
         }
-    } else {
-        let filename = env::args().nth(1).unwrap();
-        world = populate_from_file(termsize, filename);
-    }
+    };
+
+    let iterations =
+        if let Some(steps) = args.value_of("iterations") {
+            steps.parse().expect("invalid interations")
+        } else { 100 };
+    let delay =
+        if let Some(ms) = args.value_of("delay") {
+            ms.parse().expect("invalid delay")
+        } else { 100 };
 
     let mut screen = AlternateScreen::from(stdout().into_raw_mode().unwrap());
     let mut stdin = termion::async_stdin().keys();
 
-    for _gens in 0..ITERATIONS {
+    for _gens in 0..iterations {
         world = generation(termsize, &world);
         generations += 1;
         write!(screen, "{}\r", clear::All).unwrap();
@@ -64,16 +105,16 @@ fn main() {
                 Key::Char('q') | Key::Esc => break,
                 _ =>
                     while stdin.next().is_none() {
-                        thread::sleep(time::Duration::from_millis(WAIT));
+                        thread::sleep(time::Duration::from_millis(delay));
                     }
             }
         }
-        thread::sleep(time::Duration::from_millis(WAIT));
+        thread::sleep(time::Duration::from_millis(delay));
     }
 
 }
 
-fn populate_from_file(termsize: Termsize, filename: String) -> World
+fn populate_from_file(termsize: Termsize, filename: &str) -> World
 {
     let mut newworld = mk_world(termsize);
     let file = File::open(filename).unwrap();
