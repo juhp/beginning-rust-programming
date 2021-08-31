@@ -22,12 +22,12 @@ fn str_from_json(dvd: &Dvd) -> String {
     serde_json::to_string(dvd).unwrap()
 }
 
-fn dvds_to_file(f: &str, d: Dvd) {
+fn dvd_to_file(f: &str, d: Dvd) {
     let file = OpenOptions::new().write(true).open(f).unwrap();
     serde_json::to_writer(file, &d).ok();
 }
 
-fn dvds_from_file(f: &str) -> Dvd {
+fn dvd_from_file(f: &str) -> Dvd {
     let file = File::open(f).unwrap();
     let deserialized_json: Dvd = serde_json::from_reader(file).unwrap();
     deserialized_json
@@ -49,9 +49,9 @@ fn main() {
     println!("{}", encoded);
 
     let filename = String::from("file.json");
-    dvds_to_file(&filename, d);
+    dvd_to_file(&filename, d);
 
-    d = dvds_from_file(&filename);
+    d = dvd_from_file(&filename);
     println!("{}", str_from_json(&d));
 
 }
