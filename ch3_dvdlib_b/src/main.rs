@@ -23,7 +23,7 @@ fn str_from_json(dvd: &Dvd) -> String {
 }
 
 fn dvds_to_file(f: &str, d: Dvd) {
-    let file = OpenOptions::new().append(true).open(f).unwrap();
+    let file = OpenOptions::new().write(true).open(f).unwrap();
     serde_json::to_writer(file, &d).ok();
 }
 
