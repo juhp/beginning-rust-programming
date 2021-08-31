@@ -120,6 +120,7 @@ fn populate_from_file(termsize: Termsize, filename: &str) -> World
     let file = File::open(filename).unwrap();
     let reader = BufReader::new(file);
     let mut pairs:  Vec<(usize, usize)> = Vec::new();
+    let (xsize,ysize) = termsize;
     for line in reader.lines() {
         let l = line.unwrap();
         let mut words = l.split_whitespace();
@@ -129,7 +130,11 @@ fn populate_from_file(termsize: Termsize, filename: &str) -> World
     }
 
     for (x,y) in pairs {
-        newworld[x][y] = true;
+        if x < xsize && y < ysize {
+            newworld[x][y] = true;
+        } else {
+            println!("{:?} out of range", (x,y));
+        }
     }
     newworld
 }
