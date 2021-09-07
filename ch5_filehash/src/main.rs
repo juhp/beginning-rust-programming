@@ -34,13 +34,10 @@ fn read_file(filename: &fs::DirEntry) -> Result<String, ()> {
 
 fn main() -> Result<(), ()> {
     let current_dir = String::from(env::current_dir().unwrap().to_str().unwrap());
-    let (side1, mut side2) = match UnixStream::pair() {
-        Ok((side1, side2)) => (side1, side2),
-        Err(e) => {
-            println!("Couldn't create a pair of sockets: {:?}", e);
-            process::exit(-1);
-        }
-    };
+    let (side1, mut side2) = UnixStream::pair().unwrap_or_else(|err| {
+        println!("Couldn't create a pair of sockets: {:?}", err);
+        process::exit(-1);
+    });
     let _serv_handle = thread::spawn(|| sock_server(side1));
     for file in get_files(&current_dir) {
         let entry = file.unwrap();
