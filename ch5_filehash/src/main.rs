@@ -1,9 +1,9 @@
 use sha2::{Digest, Sha256};
-use std::fs::{DirEntry, ReadDir};
+use std::fs::ReadDir;
 use std::io::Read;
 use std::io::Write;
-use std::os::unix::net::{UnixListener, UnixStream};
-use std::path::Path;
+use std::os::unix::net::UnixStream;
+// use std::path::Path;
 use std::process;
 use std::thread;
 use std::{env, fs};
@@ -24,7 +24,7 @@ fn read_file(filename: &fs::DirEntry) -> Result<String, ()> {
     if !filename.path().is_dir() {
         let contents = match fs::read_to_string(filename.path()) {
             Ok(contents) => contents,
-            Err(why) => panic!("{:?}", filename.path()),
+            Err(_why) => panic!("{:?}", filename.path()),
         };
         Ok(contents)
     } else {
@@ -34,14 +34,14 @@ fn read_file(filename: &fs::DirEntry) -> Result<String, ()> {
 
 fn main() -> Result<(), ()> {
     let current_dir = String::from(env::current_dir().unwrap().to_str().unwrap());
-    let (mut side1, mut side2) = match UnixStream::pair() {
+    let (side1, mut side2) = match UnixStream::pair() {
         Ok((side1, side2)) => (side1, side2),
         Err(e) => {
             println!("Couldn't create a pair of sockets: {:?}", e);
-            std::process::exit(-1);
+            process::exit(-1);
         }
     };
-    let serv_handle = thread::spawn(|| sock_server(side1));
+    let _serv_handle = thread::spawn(|| sock_server(side1));
     for file in get_files(&current_dir) {
         let entry = file.unwrap();
         if let Ok(file) = read_file(&entry) {
@@ -50,7 +50,7 @@ fn main() -> Result<(), ()> {
                 entry.path().to_str().unwrap(),
                 Sha256::digest(file.as_bytes())
             );
-            side2.write_all(&msg.into_bytes());
+            side2.write_all(&msg.into_bytes()).expect("write failed");
         }
     }
 
