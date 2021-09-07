@@ -43,7 +43,7 @@ fn main() -> Result<(), ()> {
         let entry = file.unwrap();
         if let Ok(file) = read_file(&entry) {
             let msg = format!(
-                "{} : {:x}",
+                "{} : {:x}\n",
                 entry.path().to_str().unwrap(),
                 Sha256::digest(file.as_bytes())
             );
