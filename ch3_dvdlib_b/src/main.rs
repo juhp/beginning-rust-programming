@@ -1,5 +1,5 @@
-extern crate serde_derive;
 extern crate serde;
+extern crate serde_derive;
 extern crate serde_json;
 
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ struct Dvd {
     name: String,
     year: u16,
     cast: String,
-    length: u16
+    length: u16,
 }
 
 fn json_from_str(raw: &str) -> Dvd {
@@ -53,5 +53,4 @@ fn main() {
 
     d = dvd_from_file(&filename);
     println!("{}", str_from_json(&d));
-
 }
