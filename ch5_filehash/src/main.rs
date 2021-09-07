@@ -1,5 +1,3 @@
-extern crate sha2;
-
 use std::thread;
 use std::{env, fs};
 use std::fs::{ReadDir,DirEntry};
