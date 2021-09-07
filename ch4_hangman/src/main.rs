@@ -12,40 +12,26 @@ struct Word {
     representation: String
 }
 
-trait CheckLetter {
-    fn check_for_letter(&mut self, c: char) -> bool;
-}
-
-trait CheckComplete {
-    fn check_complete(&self) -> bool;
-}
-
-impl CheckComplete for Word {
+impl Word {
     fn check_complete(&self) -> bool {
         self.correct_count == self.length
     }
-}
 
-impl CheckLetter for Word {
     fn check_for_letter(&mut self, c: char) -> bool {
         let mut count: usize = 0;
-        let mut found: bool = false;
         let mut response = String::with_capacity(self.length);
         for (index,letter) in self.answer.chars().enumerate() {
-            if letter == c {
-                found = true;
+            let repchar = self.representation.chars().nth(index).unwrap();
+            if letter == c && repchar != c {
                 count += 1;
                 response.push(c);
             }
-            else if self.representation.chars().nth(index) != Some('_') {
-                response.push(self.representation.chars().nth(index).unwrap());
+            else if repchar != '_' {
+                response.push(repchar);
             }
             else {
                 response.push('_');
             }
-        }
-        if found {
-            println!("Found a ")
         }
         self.representation = response;
         self.correct_count += count;
@@ -84,45 +70,47 @@ fn select_word() -> String {
 
 fn main() {
 
-    let body = vec!["noose".to_string(), "head".to_string(), "neck".to_string(), "torso".to_string(), "left arm".to_string(),
-    "right arm".to_string(), "right leg".to_string(), "left leg".to_string(), "left foot".to_string(), "right foot".to_string()];
+    let body = vec!["noose", "head", "neck", "torso", "left arm",
+    "right arm", "right leg", "left leg", "left foot", "right foot"];
     let mut body_iter = body.iter();
     let result = select_word();
-    let mut answer = Word {
+    let mut hangman = Word {
         length: result.len(),
         representation: String::from_utf8(vec![b'_'; result.len()]).unwrap(),
         answer: result,
         correct_count: 0
     };
 
-    let mut letter: char;
     let mut body_complete: bool = false;
-    while !answer.check_complete() && !body_complete {
-        println!("Provide a letter to guess ");
+    while !hangman.check_complete() && !body_complete {
+        println!("Provide a letter to guess:");
         let mut input = String::new();
         match io::stdin().read_line(&mut input) {
-            Ok(_n) => {
-                letter = input.chars().next().unwrap();
-                if answer.check_for_letter(letter) {
-                    println!("There is at least one {}, so the word is {}", letter, answer.representation);
-                }
-                else {
-                    let next_part = body_iter.next().unwrap();
-                    println!("Incorrect! You are at {}", next_part);
-                    if next_part == "right foot" {
-                        body_complete = true;
+            Ok(n) => {
+                // char + newline (getChar would be nice)
+                if n == 2 {
+                    let letter = input.chars().next().unwrap();
+                    if hangman.check_for_letter(letter) {
+                        println!("There is at least one {}, so the word is {}", letter, hangman.representation);
+                    }
+                    else {
+                        let next_part = body_iter.next().unwrap();
+                        println!("Incorrect! You are at {}", next_part);
+                        if *next_part == "right foot" {
+                            body_complete = true;
+                        }
                     }
                 }
             }
-            Err(_error) => {
-                println!("Didn't get any input");
+            Err(err) => {
+                println!("Unable to read from stdin: {}", err);
             }
         }
     }
     if body_complete {
-        println!("You were unsuccessful at guessing {}", &answer.answer)
+        println!("You were unsuccessful at guessing {}", &hangman.answer)
     }
     else {
-        println!("Yes! The word was {}", &answer.answer);
+        println!("Yes! The word was {}", &hangman.answer);
     }
 }
