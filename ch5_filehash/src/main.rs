@@ -16,7 +16,7 @@ fn sock_server(mut listener: UnixStream) {
     }
 }
 
-fn get_files(path: &String) -> ReadDir {
+fn get_files(path: &str) -> ReadDir {
     fs::read_dir(&path).unwrap()
 }
 
