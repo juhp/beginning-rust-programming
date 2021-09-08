@@ -8,15 +8,14 @@ use std::{env, fs};
 
 enum FileMsg {
     FileHash(OsString, GenericArray<u8, <Sha256 as Digest>::OutputSize>),
-    Done
+    Done,
 }
 
 fn server(rx: mpsc::Receiver<FileMsg>) {
     for msg in rx {
         match msg {
-            FileMsg::FileHash(file,hash) =>
-                println!("{:x}  {}", hash, file.to_str().unwrap()),
-            FileMsg::Done => return
+            FileMsg::FileHash(file, hash) => println!("{:x}  {}", hash, file.to_str().unwrap()),
+            FileMsg::Done => return,
         }
     }
 }
@@ -45,7 +44,8 @@ fn main() {
         if let Ok(content) = read_file(&path) {
             let filename = entry.file_name();
             let hash = Sha256::digest(content.as_bytes());
-            tx.send(FileMsg::FileHash(filename, hash)).expect("write failed");
+            tx.send(FileMsg::FileHash(filename, hash))
+                .expect("write failed");
         }
     }
     tx.send(FileMsg::Done).expect("failed to send done");
