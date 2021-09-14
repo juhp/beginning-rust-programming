@@ -21,26 +21,25 @@ fn get_file_list() -> String {
 
 fn handle_req(mut conn: TcpStream) {
     let mut reqbytes = [0; 512];
-    let mut response = String::with_capacity(8192);
 
     match conn.write(b"> ")  {
         Ok(_) => (),
         Err(err) => println!("Received an error on write! {}", err)
     };
     let requestsize = conn.read(&mut reqbytes);
-    let req = String::from_utf8_lossy(&reqbytes);
     let size = requestsize.unwrap();
-    let mut request: String = String::from_utf8(reqbytes[..size].to_vec()).unwrap();
+    let request: String = String::from_utf8(reqbytes[..size].to_vec()).unwrap();
     if size > 0 {
         println!("Received: {}", request);
         let mut params = request.split_whitespace();
         let command = params.next().unwrap();
-        match command {
-            "flist" => response = get_file_list(),
-            "md" => response = make_directory(params.next().unwrap()),
-             _ => response = String::from("Unacceptable command")
-        }
-        match conn.write(&response.as_bytes()) {
+        let response =
+            match command {
+                "flist" => get_file_list(),
+                "md" => make_directory(params.next().unwrap()),
+                _ => String::from("Unacceptable command")
+            };
+        match conn.write(response.as_bytes()) {
             Ok(_) => (),
             Err(err) => println!("Received an error on write! {}", err)
         };
