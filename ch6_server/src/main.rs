@@ -1,11 +1,11 @@
+use std::fs;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
-use std::fs;
 
-fn make_directory(param: &str)  -> String {
+fn make_directory(param: &str) -> String {
     match fs::create_dir_all(param) {
-        Ok(_) =>String::from("Success"),
-        Err(err) => err.to_string()
+        Ok(_) => String::from("Success"),
+        Err(err) => err.to_string(),
     }
 }
 
@@ -22,9 +22,9 @@ fn get_file_list() -> String {
 fn handle_req(mut conn: TcpStream) {
     let mut reqbytes = [0; 512];
 
-    match conn.write(b"> ")  {
+    match conn.write(b"> ") {
         Ok(_) => (),
-        Err(err) => println!("Received an error on write! {}", err)
+        Err(err) => println!("Received an error on write! {}", err),
     };
     let requestsize = conn.read(&mut reqbytes);
     let size = requestsize.unwrap();
@@ -33,15 +33,14 @@ fn handle_req(mut conn: TcpStream) {
         println!("Received: {}", request);
         let mut params = request.split_whitespace();
         let command = params.next().unwrap();
-        let response =
-            match command {
-                "flist" => get_file_list(),
-                "md" => make_directory(params.next().unwrap()),
-                _ => String::from("Unacceptable command")
-            };
+        let response = match command {
+            "flist" => get_file_list(),
+            "md" => make_directory(params.next().unwrap()),
+            _ => String::from("Unacceptable command"),
+        };
         match conn.write(response.as_bytes()) {
             Ok(_) => (),
-            Err(err) => println!("Received an error on write! {}", err)
+            Err(err) => println!("Received an error on write! {}", err),
         };
     }
 }
