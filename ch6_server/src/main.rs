@@ -10,13 +10,11 @@ fn make_directory(param: &str) -> String {
 }
 
 fn get_file_list() -> String {
-    let mut listing = String::with_capacity(8192);
-
-    for file in fs::read_dir(".").unwrap() {
-        let entry = file.unwrap().path().display().to_string();
-        listing.push_str(entry.as_str());
-    }
-    listing
+    fs::read_dir(".")
+        .unwrap()
+        .map(|f| f.unwrap().path().display().to_string())
+        .collect::<Vec<String>>()
+        .join(" ")
 }
 
 fn handle_req(mut conn: TcpStream) {
