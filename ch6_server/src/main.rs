@@ -22,9 +22,8 @@ fn get_file_list() -> String {
 fn handle_req(mut conn: TcpStream) {
     let mut reqbytes = [0; 512];
 
-    match conn.write(b"> ") {
-        Ok(_) => (),
-        Err(err) => println!("Received an error on write! {}", err),
+    if let Err(err) = conn.write(b"> ") {
+        println!("Received an error on write! {}", err)
     };
     let requestsize = conn.read(&mut reqbytes);
     let size = requestsize.unwrap();
