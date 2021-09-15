@@ -1,3 +1,4 @@
+use bufstream::BufStream;
 use std::fs;
 use std::io::prelude::*;
 use std::net::{TcpListener, TcpStream};
@@ -17,17 +18,17 @@ fn get_file_list() -> String {
         .join(" ")
 }
 
-fn handle_req(mut conn: TcpStream) {
-    let mut reqbytes = [0; 512];
-
-    if let Err(err) = conn.write(b"> ") {
-        println!("Received an error on write! {}", err)
+fn handle_req(conn: TcpStream) {
+    let mut stream = BufStream::new(&conn);
+    if let Err(err) = stream.write(b"> ") {
+        println!("Received an error on write! {}", err);
+        return
     };
-    let requestsize = conn.read(&mut reqbytes);
-    let size = requestsize.unwrap();
-    let request: String = String::from_utf8(reqbytes[..size].to_vec()).unwrap();
+    stream.flush().unwrap();
+    let mut request = String::new();
+    let size = stream.read_line(&mut request).unwrap();
     if size > 0 {
-        println!("Received: {}", request);
+        print!("Received: {}", request);
         let mut params = request.split_whitespace();
         let command = params.next().unwrap();
         let response = match command {
@@ -35,9 +36,8 @@ fn handle_req(mut conn: TcpStream) {
             "md" => make_directory(params.next().unwrap()),
             _ => String::from("Unacceptable command"),
         };
-        match conn.write(response.as_bytes()) {
-            Ok(_) => (),
-            Err(err) => println!("Received an error on write! {}", err),
+        if let Err(err) = writeln!(stream, "{}", response) {
+            println!("Received an error on write! {}", err)
         };
     }
 }
