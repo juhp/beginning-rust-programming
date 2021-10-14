@@ -1,7 +1,6 @@
-use mongodb::{sync::Client};
 use mongodb::bson::doc;
-use serde_json;
-use serde::{Serialize, Deserialize};
+use mongodb::sync::Client;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
 
@@ -11,11 +10,10 @@ struct Person {
     age: i32,
     occupation: String,
     location: String,
-    phone: String
+    phone: String,
 }
 
-fn read_records(filename: &str)  {
-
+fn read_records(filename: &str) {
     let file = File::open(filename).unwrap();
     let buf_reader = BufReader::new(file);
 
@@ -25,7 +23,7 @@ fn read_records(filename: &str)  {
         let p: Person = serde_json::from_str(&item.unwrap().to_string()).unwrap();
         match db_populate(p) {
             Ok(_o) => (),
-            Err(e) => println!("Unable to insert data because of {}", e)
+            Err(e) => println!("Unable to insert data because of {}", e),
         };
     }
 }
@@ -48,9 +46,7 @@ fn db_populate(record: Person) -> mongodb::error::Result<()> {
 }
 
 fn main() {
-
     const FILENAME: &str = "people.json";
 
     read_records(FILENAME);
-
 }
