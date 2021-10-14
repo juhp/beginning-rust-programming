@@ -1,6 +1,5 @@
-use sqlite;
-use sqlite::State;
 use sqlite::Connection;
+use sqlite::State;
 use std::io;
 
 pub fn addrecord(conn: &Connection) -> io::Result<()> {
@@ -18,25 +17,27 @@ pub fn addrecord(conn: &Connection) -> io::Result<()> {
     println!("Justification");
     io::stdin().read_line(&mut justification)?;
 
-    let commandstring = format!("INSERT INTO findings (title, finding, details, justification) VALUES (\"{}\",
-        \"{}\", \"{}\", \"{}\")", title.trim(), finding.trim(), details.trim(), justification.trim());
+    let commandstring = format!(
+        "INSERT INTO findings (title, finding, details, justification) VALUES (\"{}\",
+        \"{}\", \"{}\", \"{}\")",
+        title.trim(),
+        finding.trim(),
+        details.trim(),
+        justification.trim()
+    );
     let _statement = conn.execute(&commandstring).unwrap();
 
     Ok(())
 }
 
 pub fn listrecords(conn: &Connection) {
-    let mut statement = conn
-        .prepare("SELECT * FROM findings")
-        .unwrap();
+    let mut statement = conn.prepare("SELECT * FROM findings").unwrap();
 
-        while let State::Row = statement.next().unwrap() {
-            println!("-----------------------------");
-            println!("Title = {}", statement.read::<String>(1).unwrap());
-            println!("Finding = {}", statement.read::<String>(2).unwrap());
-            println!("Details = {}", statement.read::<String>(3).unwrap());
-            println!("Justification = {}", statement.read::<String>(4).unwrap());
-
-        }
-
+    while let State::Row = statement.next().unwrap() {
+        println!("-----------------------------");
+        println!("Title = {}", statement.read::<String>(1).unwrap());
+        println!("Finding = {}", statement.read::<String>(2).unwrap());
+        println!("Details = {}", statement.read::<String>(3).unwrap());
+        println!("Justification = {}", statement.read::<String>(4).unwrap());
+    }
 }

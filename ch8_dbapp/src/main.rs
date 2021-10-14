@@ -1,4 +1,3 @@
-use sqlite;
 use sqlite::Connection;
 use std::env;
 use std::error::Error;
@@ -14,7 +13,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             title TEXT NOT NULL,
             finding TEXT NOT NULL,
             details TEXT,
-            justification TEXT)")?;
+            justification TEXT)",
+    )?;
 
     let args: Vec<String> = env::args().collect();
     if args.len() > 1 {
@@ -23,10 +23,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         match command {
             "add" => dbfuncs::addrecord(&conn)?,
             "list" => dbfuncs::listrecords(&conn),
-            _ => println!("Didn't send a valid command in")
+            _ => println!("Didn't send a valid command in"),
         }
-    }
-    else {
+    } else {
         println!("Please specify add or list as a command line parameter");
     }
 
