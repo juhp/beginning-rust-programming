@@ -7,8 +7,8 @@ async fn main() {
 let bacon_contents = fs::read_to_string("bacon.txt")
     .expect("Unable to open bacon.txt file");
 
-let bacon = warp::path("bacon").map(move || format!("{}", &bacon_contents));
-let hello = warp::path!("hello" / "you").map(|| "Hello, you\n"); 
+let bacon = warp::path("bacon").map(move || (&bacon_contents).to_string());
+let hello = warp::path!("hello" / "you").map(|| "Hello, you\n");
 
 let bye = warp::path("bye")
         .and(warp::path::param())
